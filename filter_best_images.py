@@ -31,7 +31,11 @@ VALID_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp'}
 
 def main():
     os.makedirs(TARGET_FOLDER, exist_ok=True)
-    
+
+    if not os.path.isdir(SOURCE_FOLDER):
+        print(f"ERROR: Source folder not found: {SOURCE_FOLDER}")
+        return
+
     print(f"Loading model: {MODEL_PATH}...")
     try:
         model = YOLO(MODEL_PATH)
@@ -97,6 +101,8 @@ def main():
                 target_file = os.path.join(TARGET_FOLDER, new_name)
                 
                 print(f" -> Moving: {filename} (Score: {score:.2f})")
+                if os.path.exists(target_file):
+                    os.remove(target_file)
                 shutil.move(source_file, target_file)
 
     print("\n--- Done! ---")
