@@ -455,6 +455,8 @@ class YoloAnnotationApp:
             
     def skip_current(self):
         """Skips the current image and moves to the next one"""
+        if not self.image_files:
+            return
         img_filename = self.image_files[self.current_index]
         
         # Store action for undo
