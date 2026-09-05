@@ -547,48 +547,51 @@ class YoloAnnotationApp:
     def write_label_file(self, label_path):
         # Reuse already-decoded image (loaded in load_current_image)
         height, width = self.current_img.shape[:2]
-        
+
         has_detections = False
-        
-        if self.model_type == "ultralytics":
-            # For YOLOv8+ (ultralytics YOLO)
-            if len(self.current_results) > 0 and len(self.current_results[0].boxes) > 0:
-                # Take the first (best) detection
-                box = self.current_results[0].boxes[0]
-                xyxy = box.xyxy[0].cpu().numpy()
-                x1, y1, x2, y2 = xyxy
-                
-                # Convert to YOLO format (x_center, y_center, width, height)
-                x_center = ((x1 + x2) / 2) / width
-                y_center = ((y1 + y2) / 2) / height
-                w = (x2 - x1) / width
-                h = (y2 - y1) / height
-                
-                # Write to label file (class_id x_center y_center width height)
-                with open(label_path, 'w') as f:
-                    f.write(f"0 {x_center} {y_center} {w} {h}")
-                
-                has_detections = True
-        else:
-            # For YOLOv5 (torch.hub)
-            detections = self.current_results.xyxy[0].cpu().numpy()
-            if len(detections) > 0:
-                # Take the first (best) detection
-                best_detection = detections[0]
-                x1, y1, x2, y2, conf, cls = best_detection
-                
-                # Convert to YOLO format (x_center, y_center, width, height)
-                x_center = ((x1 + x2) / 2) / width
-                y_center = ((y1 + y2) / 2) / height
-                w = (x2 - x1) / width
-                h = (y2 - y1) / height
-                
-                # Write to label file (class_id x_center y_center width height)
-                with open(label_path, 'w') as f:
-                    f.write(f"0 {x_center} {y_center} {w} {h}")
-                
-                has_detections = True
-        
+
+        # current_results is None when the YOLO prediction call in load_current_image raised
+        # (see the except block there) — treat that the same as "no detections" below.
+        if self.current_results is not None:
+            if self.model_type == "ultralytics":
+                # For YOLOv8+ (ultralytics YOLO)
+                if len(self.current_results) > 0 and len(self.current_results[0].boxes) > 0:
+                    # Take the first (best) detection
+                    box = self.current_results[0].boxes[0]
+                    xyxy = box.xyxy[0].cpu().numpy()
+                    x1, y1, x2, y2 = xyxy
+
+                    # Convert to YOLO format (x_center, y_center, width, height)
+                    x_center = ((x1 + x2) / 2) / width
+                    y_center = ((y1 + y2) / 2) / height
+                    w = (x2 - x1) / width
+                    h = (y2 - y1) / height
+
+                    # Write to label file (class_id x_center y_center width height)
+                    with open(label_path, 'w') as f:
+                        f.write(f"0 {x_center} {y_center} {w} {h}")
+
+                    has_detections = True
+            else:
+                # For YOLOv5 (torch.hub)
+                detections = self.current_results.xyxy[0].cpu().numpy()
+                if len(detections) > 0:
+                    # Take the first (best) detection
+                    best_detection = detections[0]
+                    x1, y1, x2, y2, conf, cls = best_detection
+
+                    # Convert to YOLO format (x_center, y_center, width, height)
+                    x_center = ((x1 + x2) / 2) / width
+                    y_center = ((y1 + y2) / 2) / height
+                    w = (x2 - x1) / width
+                    h = (y2 - y1) / height
+
+                    # Write to label file (class_id x_center y_center width height)
+                    with open(label_path, 'w') as f:
+                        f.write(f"0 {x_center} {y_center} {w} {h}")
+
+                    has_detections = True
+
         # If there are no detections, create an empty label file
         if not has_detections:
             open(label_path, 'w').close()
