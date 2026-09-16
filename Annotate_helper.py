@@ -233,7 +233,13 @@ class YoloAnnotationApp:
             self.status_label.config(text=f"Undid action for: {img_filename}")
             self.last_action = None
             self.undo_button.config(state='disabled')
-            
+
+            # Restore navigation to the image the undo just reverted
+            if self.image_files:
+                self.current_index = min(action['current_index'], len(self.image_files) - 1)
+            else:
+                self.current_index = 0
+
             # Refresh the current view
             self.load_current_image()
             
